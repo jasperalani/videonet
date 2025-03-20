@@ -1,0 +1,8 @@
+{
+    "radarr": {
+        "save_path": "radarr"
+    },
+    "sonarr": {
+        "save_path": "sonarr"
+    }
+}

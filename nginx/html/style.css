@@ -1,0 +1,119 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-size: 150%; /* Reduced from 200% to make it 25% smaller */
+}
+
+.header {
+    text-align: center;
+    padding: 30px; /* Reduced from 40px */
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Changed to 3 columns */
+    gap: 22px; /* Reduced from 30px */
+    padding: 30px; /* Reduced from 40px */
+    flex-grow: 1;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1200px) { /* Adjusted breakpoint */
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 800px) { /* Adjusted breakpoint */
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) { /* Adjusted breakpoint */
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+    .header h1 {
+        font-size: 1.5em;
+    }
+}
+
+.grid-item {
+    background-color: #1e1e1e;
+    border-radius: 12px; /* Reduced from 16px */
+    padding: 22px; /* Reduced from 30px */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s;
+    cursor: pointer;
+    position: relative;
+    min-height: 180px; /* Reduced from 240px */
+}
+
+.grid-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 22px rgba(255, 255, 255, 0.1); /* Reduced shadow size */
+}
+
+.service-name {
+    font-size: 1.3em; /* Reduced from 1.4em */
+    font-weight: bold;
+    margin-bottom: 15px; /* Reduced from 20px */
+}
+
+.service-url {
+    font-size: 0.9em; /* Reduced from 1em */
+    color: #aaaaaa;
+    margin-bottom: 15px; /* Reduced from 20px */
+    word-break: break-all;
+}
+
+.status-indicator {
+    height: 15px; /* Reduced from 20px */
+    width: 15px; /* Reduced from 20px */
+    border-radius: 50%;
+    background-color: #777;
+    display: inline-block;
+    margin-right: 7px; /* Reduced from 10px */
+    vertical-align: middle;
+}
+
+.status-text {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 1em; /* Reduced from 1.1em */
+}
+
+.error-message {
+    font-size: 0.9em; /* Reduced from 1em */
+    color: #ff6b6b;
+    margin-top: 7px; /* Reduced from 10px */
+    word-break: break-all;
+}
+
+.online {
+    background-color: #4CAF50;
+}
+
+.offline {
+    background-color: #f44336;
+}
+
+.loading {
+    background-color: #FFC107;
+}
+
+.footer {
+    text-align: center;
+    padding: 15px; /* Reduced from 20px */
+    font-size: 0.9em; /* Reduced from 1em */
+    color: #aaaaaa;
+}

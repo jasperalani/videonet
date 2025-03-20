@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Service Dashboard</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="icon" type="image/x-icon" href="favicon.png">
+
+    </head>
+    <body>
+        <div class="header">
+            <h1>Service Dashboard</h1>
+        </div>
+        <div class="grid-container" id="serviceGrid"></div>
+        <div class="footer">
+            Last updated: <span id="lastUpdated">-</span>
+        </div>
+
+        <script>
+                // Define services with authentication details where needed
+                const BASE_IP = "localhost"; //
+                const DEFAULT_ADMIN = "admin";
+                const DEFAULT_PASSWORD = "password";
+                const PING_ENDPOINT = "/ping";
+
+                // Define services with authentication details where needed
+                const services = [
+                    { name: "Jellyfin", url: `http://${BASE_IP}:8096`, pollUrl: `http://${BASE_IP}:8096`, requiresAuth: false, pingEndpoint: false },
+                    { name: "Petio", url: `http://${BASE_IP}:7777`, pollUrl: `http://${BASE_IP}:7777`, requiresAuth: false, pingEndpoint: false },
+                    {
+                        name: "Sonarr",
+                        url: `http://${BASE_IP}:8989`,
+                        pollUrl: `http://${BASE_IP}:8989${PING_ENDPOINT}`,
+                        requiresAuth: true,
+                        username: DEFAULT_ADMIN,
+                        password: DEFAULT_PASSWORD,
+                        pingEndpoint: false
+                    },
+                    {
+                        name: "Radarr",
+                        url: `http://${BASE_IP}:7878`,
+                        pollUrl: `http://${BASE_IP}:7878${PING_ENDPOINT}`,
+                        requiresAuth: true,
+                        username: DEFAULT_ADMIN,
+                        password: DEFAULT_PASSWORD,
+                        pingEndpoint: false
+                    },
+                    {
+                        name: "Prowlarr",
+                        url: `http://${BASE_IP}:9696`,
+                        pollUrl: `http://${BASE_IP}:9696${PING_ENDPOINT}`,
+                        requiresAuth: true,
+                        username: DEFAULT_ADMIN,
+                        password: DEFAULT_PASSWORD,
+                        pingEndpoint: false
+                    },
+                    { name: "FlareSolverr", url: `http://${BASE_IP}:8191`, pollUrl: `http://${BASE_IP}:8191`, requiresAuth: false, pingEndpoint: false },
+                    { name: "qBittorrent", url: `http://${BASE_IP}:8081/`, pollUrl: `http://${BASE_IP}:8081/`, requiresAuth: false, pingEndpoint: false },
+                    { name: "Pihole", url: `http://${BASE_IP}:81/admin`, pollUrl: `http://${BASE_IP}:81/admin`, requiresAuth: false, pingEndpoint: false },
+                ]
+
+                // Create grid items
+                function createGrid() {
+                    const grid = document.getElementById('serviceGrid');
+
+                    // Display all services in a grid
+                    services.forEach(service => {
+                        const gridItem = document.createElement('div');
+                        gridItem.className = 'grid-item';
+
+                        const serviceName = document.createElement('div');
+                        serviceName.className = 'service-name';
+                        serviceName.textContent = service.name;
+
+                        const serviceUrl = document.createElement('div');
+                        serviceUrl.className = 'service-url';
+                        serviceUrl.textContent = service.url;
+
+                        const statusContainer = document.createElement('div');
+                        const statusIndicator = document.createElement('span');
+                        statusIndicator.className = 'status-indicator loading';
+                        const statusText = document.createElement('span');
+                        statusText.className = 'status-text';
+                        statusText.textContent = 'Checking...';
+
+                        // Add error message element
+                        const errorMessage = document.createElement('div');
+                        errorMessage.className = 'error-message';
+                        errorMessage.style.display = 'none';
+
+                        statusContainer.appendChild(statusIndicator);
+                        statusContainer.appendChild(statusText);
+
+                        gridItem.appendChild(serviceName);
+                        gridItem.appendChild(serviceUrl);
+                        gridItem.appendChild(statusContainer);
+                        gridItem.appendChild(errorMessage);
+
+                        // Add click event to navigate to the service
+                        gridItem.addEventListener('click', () => {
+                            window.open(service.url, '_blank');
+                        });
+
+                        grid.appendChild(gridItem);
+
+                        // Store elements for later updates
+                        service.indicators = {
+                            indicator: statusIndicator,
+                            text: statusText,
+                            error: errorMessage
+                        };
+                    });
+                }
+
+                // Check service status with different authentication methods
+                function checkServiceStatus(service) {
+                    return new Promise((resolve) => {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+                        // Hide the error message on new check
+                        service.indicators.error.style.display = 'none';
+                        service.indicators.error.textContent = '';
+
+                        // For services with ping endpoint
+                        if (service.pingEndpoint) {
+
+                            let fetchOptions = {
+                                signal: controller.signal,
+                            };
+
+                            // Add authentication headers if required
+                            if (service.requiresAuth) {
+                                const authString = `${service.username}:${service.password}`;
+                                const base64Auth = btoa(authString);
+                                fetchOptions.headers = {
+                                    'Authorization': `Basic ${base64Auth}`
+                                };
+                            }
+
+                            fetch(service.pollUrl, fetchOptions)
+                                .then(response => {
+                                    clearTimeout(timeoutId);
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    if (data.status === "OK") {
+
+                                        // Service is online
+                                        service.indicators.indicator.className = 'status-indicator online';
+                                        service.indicators.text.textContent = 'Online';
+                                    } else {
+
+                                        // Service returned but not with OK status
+                                        service.indicators.indicator.className = 'status-indicator offline';
+                                        service.indicators.text.textContent = 'Error';
+                                        service.indicators.error.style.display = 'block';
+                                        service.indicators.error.textContent = JSON.stringify(data);
+                                    }
+                                    resolve(true);
+                                })
+                                .catch(error => {
+                                    clearTimeout(timeoutId);
+                                    // Service is not reachable
+                                    service.indicators.indicator.className = 'status-indicator offline';
+                                    service.indicators.text.textContent = 'Offline';
+                                    service.indicators.error.style.display = 'block';
+                                    service.indicators.error.textContent = error.message || 'Connection failed';
+                                    resolve(false);
+                                });
+                        } else {
+                            let fetchOptions = {
+                                signal: controller.signal,
+                                mode: 'no-cors'
+                            };
+
+                            // Add authentication headers if required
+                            if (service.requiresAuth) {
+                                const authString = `${service.username}:${service.password}`;
+                                const base64Auth = btoa(authString);
+                                fetchOptions.headers = {
+                                    'Authorization': `Basic ${base64Auth}`
+                                };
+                            }
+
+                            fetch(service.pollUrl, fetchOptions)
+                                .then(() => {
+                                    clearTimeout(timeoutId);
+                                    // Update the service status UI
+                                    service.indicators.indicator.className = 'status-indicator online';
+                                    service.indicators.text.textContent = 'Online';
+                                    resolve(true); // Service is reachable
+                                })
+                                .catch(error => {
+                                    clearTimeout(timeoutId);
+                                    // Update the service status UI
+                                    service.indicators.indicator.className = 'status-indicator offline';
+                                    service.indicators.text.textContent = 'Offline';
+                                    service.indicators.error.style.display = 'block';
+                                    service.indicators.error.textContent = error.message || 'Connection failed';
+                                    resolve(false); // Service is not reachable
+                                });
+                        }
+                    });
+                }
+
+                // Check all services
+                function checkAllServices() {
+                    const checkPromises = services.map(service => checkServiceStatus(service));
+
+                    Promise.all(checkPromises).then(() => {
+
+                        // Update the last checked time
+                        const now = new Date();
+                        document.getElementById('lastUpdated').textContent = now.toLocaleString();
+                    });
+                }
+
+                // Initialize the dashboard
+                window.onload = function () {
+                    createGrid();
+                    checkAllServices();
+
+                    // Set up polling interval (every 30 seconds)
+                    setInterval(checkAllServices, 30000);
+                };
+        </script>
+    </body>
+</html>
