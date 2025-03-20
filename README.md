@@ -44,7 +44,7 @@ docker compose up --build --remove-orphans
     - http://localhost:32400
     - Supplies media metadata for petio
 - qbittorrent
-    - http://localhost:6767/
+    - http://localhost:8081/
     - Torrent download client
     - Preconfigured files:
       - [`qBittorrent.conf`](qbittorrent/qBittorrent.conf)
@@ -61,3 +61,4 @@ docker compose up --build --remove-orphans
 
 ### Todo
 - Add url for setup wizard for each service in this readme
+- Fix bug qbittorrent link doesnt work on dashboard
